@@ -8,8 +8,6 @@ import com.umc9th.dumMoney.domain.place.dto.response.PlaceListResponseDto;
 import com.umc9th.dumMoney.domain.place.dto.response.PlaceSearchResponseDto;
 import com.umc9th.dumMoney.domain.place.entity.Place;
 import com.umc9th.dumMoney.domain.place.repository.PlaceRepository;
-import com.umc9th.dumMoney.global.apiPayload.code.ErrorCode;
-import com.umc9th.dumMoney.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +29,7 @@ public class PlaceService {
     // 1. 기존 지도 검색 기능
     public PlaceSearchResponseDto searchPlaces(Long memberId, double lat, double lng) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
 
         double radius = member.getSearchRadius().doubleValue();
 
@@ -50,9 +48,7 @@ public class PlaceService {
     // 2. 장소 상세 조회
     public PlaceDetailResponseDto getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new GeneralException(ErrorCode.NOT_FOUND));
-
-        // 2. Entity -> DTO 변환 후 반환
+                .orElseThrow(() -> new IllegalArgumentException("해당 장소를 찾을 수 없습니다. id=" + placeId));
         return PlaceDetailResponseDto.from(place);
     }
 
@@ -60,7 +56,7 @@ public class PlaceService {
     public String recommendPlaces(RecommendationRequestDto request) {
         Long memberId = request.getMemberId();
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
 
         double searchLat;
         double searchLng;
@@ -94,23 +90,66 @@ public class PlaceService {
             routeInfo = "현재 위치 주변 탐색 중";
         }
 
-        // DB에서 후보 장소 검색
+        // 프롬프트를 분석해서 카테고리 결정 (음료/카페 관련 → CAFE, 식사/음식 관련 → RESTAURANT)
+        String categoryStr = determineCategoryFromPrompt(request.getUserPrompt());
+        
+        log.info("프롬프트 분석 결과: '{}' → 카테고리={}", request.getUserPrompt(), categoryStr);
+        
+        // DB에서 후보 장소 검색 (출발지/도착지 기반으로 계산한 좌표 사용)
         List<Place> candidates = placeRepository.findNearbyPlacesForAI(
-                member.getLat(),
-                member.getLng(),
-                member.getSearchRadius().doubleValue(), // radius (m)
-                member.getMinBudget(),               // budget
+                searchLat,      // 계산된 중간 지점 위도
+                searchLng,      // 계산된 중간 지점 경도
+                searchRadius,   // 계산된 반경
+                categoryStr,    // 프롬프트에서 분석한 카테고리 (CAFE or RESTAURANT)
+                member.getMinBudget(),
                 member.getMaxBudget()
         );
+        
+        log.info("검색 조건: 카테고리={}, 예산={}~{}, 반경={}m, 좌표=({}, {})", 
+                categoryStr, member.getMinBudget(), member.getMaxBudget(), searchRadius, searchLat, searchLng);
 
-        log.info("AI 추천 후보군 개수: {}개", candidates.size());
+        log.info("DB에서 찾은 후보군 개수: {}개", candidates.size());
 
         if (candidates.isEmpty()) {
             return "{\"keywords\": [], \"recommendations\": [], \"message\": \"조건에 맞는 주변 가게가 없습니다.\"}";
         }
 
         // Gemini 호출 (candidates, userPrompt, routeInfo 전달)
+        log.info("Gemini API 호출 시작 - 후보 개수: {}개, 프롬프트: {}", candidates.size(), request.getUserPrompt());
         return geminiService.getRecommendation(candidates, request.getUserPrompt(), routeInfo);
+    }
+
+    // [유틸] 프롬프트를 분석해서 카테고리 결정 (자연어 이해)
+    private String determineCategoryFromPrompt(String userPrompt) {
+        if (userPrompt == null || userPrompt.trim().isEmpty()) {
+            return "RESTAURANT"; // 기본값
+        }
+        
+        String prompt = userPrompt.toLowerCase();
+        
+        // 카페 관련 키워드 (음료, 커피, 카페 등)
+        if (prompt.contains("음료") || prompt.contains("커피") || prompt.contains("카페") || 
+            prompt.contains("라떼") || prompt.contains("아메리카노") || prompt.contains("음료수") ||
+            prompt.contains("디저트") || prompt.contains("케이크") || prompt.contains("빵") ||
+            prompt.contains("차") || prompt.contains("티") || prompt.contains("마시") ||
+            prompt.contains("마셔") || prompt.contains("마실") || prompt.contains("마셔야") ||
+            prompt.contains("마시고") || prompt.contains("마시려") || prompt.contains("마시고 싶")) {
+            return "CAFE";
+        }
+        
+        // 식당 관련 키워드 (밥, 식사, 음식 등)
+        if (prompt.contains("밥") || prompt.contains("식사") || prompt.contains("음식") || 
+            prompt.contains("식당") || prompt.contains("맛집") || prompt.contains("먹") ||
+            prompt.contains("한식") || prompt.contains("중식") || prompt.contains("일식") || 
+            prompt.contains("양식") || prompt.contains("치킨") || prompt.contains("피자") ||
+            prompt.contains("면") || prompt.contains("국수") || prompt.contains("떡볶이") ||
+            prompt.contains("먹고") || prompt.contains("먹어") || prompt.contains("먹을") ||
+            prompt.contains("먹어야") || prompt.contains("먹고 싶")) {
+            return "RESTAURANT";
+        }
+        
+        // 기본값: 키워드가 없으면 식당으로
+        return "RESTAURANT";
     }
 
     // [유틸] 두 좌표 사이 거리 계산 (Haversine 공식, 미터 단위 반환)

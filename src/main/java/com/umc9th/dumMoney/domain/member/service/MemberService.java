@@ -73,8 +73,9 @@ public class MemberService {
     @Transactional
     public void updateMemberSettings(Long memberId, MemberUpdateDto request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
 
+        // 이미 존재하는 메서드를 재사용하여 값을 변경
         member.updateOnboarding(
                 request.getMinBudget(),
                 request.getMaxBudget(),
