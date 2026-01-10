@@ -20,26 +20,51 @@ public class MemberService {
     public PreferenceResponse createOnboarding(OnboardingRequest request) {
         // 거리 검증 (300, 500, 1000, 1500만 허용)
         if (!isValidDistance(request.getDistance())) {
-            throw new MemberException(ErrorCode.BAD_REQUEST);
+            throw new MemberException(ErrorCode.INVALID_DISTANCE);
         }
 
         // 예산 범위 검증 (minBudget <= maxBudget)
         if (request.getMinBudget() > request.getMaxBudget()) {
-            throw new MemberException(ErrorCode.BAD_REQUEST);
+            throw new MemberException(ErrorCode.INVALID_BUDGET_RANGE);
         }
 
-        // 게스트 사용자용 새로운 Member 생성 (온보딩 시 위치 정보 포함)
-        Member member = Member.builder()
-                .minBudget(request.getMinBudget())
-                .maxBudget(request.getMaxBudget())
-                .searchRadius(request.getDistance())
-                .targetCategory(request.getCategory())
-                .lat(request.getLat())
-                .lng(request.getLng())
-                .build();
+        // 좌표 검증 (null 체크)
+        validateLocation(request.getLat(), request.getLng());
 
-        Member savedMember = memberRepository.save(member);
-        return PreferenceResponse.from(savedMember);
+
+        Member member;
+
+        // 2. 분기 처리
+        if (request.getMemberId() != null) {
+            // [CASE A] 기존 회원 수정
+            member = memberRepository.findById(request.getMemberId())
+                    .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
+
+            // Dirty Checking으로 업데이트
+            member.updateOnboarding(
+                    request.getMinBudget(),
+                    request.getMaxBudget(),
+                    request.getDistance(),
+                    request.getCategory()
+            );
+            member.updateLocation(request.getLat(), request.getLng());
+        } else {
+            // [CASE B] 신규 회원 생성 (게스트)
+            member = Member.builder()
+                    .minBudget(request.getMinBudget())
+                    .maxBudget(request.getMaxBudget())
+                    .searchRadius(request.getDistance())
+                    .targetCategory(request.getCategory())
+                    .lat(request.getLat())
+                    .lng(request.getLng())
+                    .build();
+
+            // 신규 생성 시에는 반드시 save 호출 필요
+            memberRepository.save(member);
+        }
+
+        // 3. 결과 반환 (여기 담긴 memberId를 프론트가 로컬 스토리지에 저장)
+        return PreferenceResponse.from(member);
     }
 
     public PreferenceResponse getPreference(Long memberId) {
@@ -53,8 +78,13 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 
+        // [추가] 좌표 검증 (null 체크)
+        validateLocation(request.getLat(), request.getLng());
+
         member.updateLocation(request.getLat(), request.getLng());
         Member savedMember = memberRepository.save(member);
+
+
 
         return LocationUpdateResponse.builder()
                 .memberId(savedMember.getMemberId())
@@ -66,14 +96,20 @@ public class MemberService {
                 .build();
     }
 
-    private boolean isValidDistance(Integer distance) {
-        return distance != null && (distance == 300 || distance == 500 || distance == 1000 || distance == 1500);
-    }
-
     @Transactional
     public void updateMemberSettings(Long memberId, MemberUpdateDto request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 거리 검증 (300, 500, 1000, 1500만 허용)
+        if (!isValidDistance(request.getRadius())) {
+            throw new MemberException(ErrorCode.INVALID_DISTANCE);
+        }
+
+        // 예산 범위 검증 (minBudget <= maxBudget)
+        if (request.getMinBudget() > request.getMaxBudget()) {
+            throw new MemberException(ErrorCode.INVALID_BUDGET_RANGE);
+        }
 
         member.updateOnboarding(
                 request.getMinBudget(),
@@ -81,5 +117,16 @@ public class MemberService {
                 request.getRadius(),
                 request.getCategory()
         );
+    }
+
+    private boolean isValidDistance(Integer distance) {
+        return distance != null && (distance == 300 || distance == 500 || distance == 1000 || distance == 1500);
+    }
+
+    // 3. 좌표 검증 로직
+    private void validateLocation(Double lat, Double lng) {
+        if (lat == null || lng == null) {
+            throw new MemberException(ErrorCode.BAD_REQUEST); // 또는 LOCATION_NULL
+        }
     }
 }
