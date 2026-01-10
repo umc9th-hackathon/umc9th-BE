@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OnboardingRequest {
 
+    private Long memberId;      // [핵심] null이면 신규 생성, 값이 있으면 수정하게 분기
+    
     @NotNull(message = "카테고리는 필수입니다.")
     private Category category;
 

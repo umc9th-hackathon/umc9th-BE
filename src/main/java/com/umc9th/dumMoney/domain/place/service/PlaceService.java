@@ -31,6 +31,11 @@ public class PlaceService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
 
+        // [추가] 필수 데이터 유효성 검사
+        if (member.getLat() == null || member.getLng() == null || member.getSearchRadius() == null) {
+            throw new GeneralException(ErrorCode.MEMBER_LOCATION_NOT_SET);
+        }
+
         double radius = member.getSearchRadius().doubleValue();
         double memberLat = member.getLat(); // [변경] DB에 저장된 위도 사용
         double memberLng = member.getLng(); // [변경] DB에 저장된 경도 사용
