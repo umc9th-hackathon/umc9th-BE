@@ -4,6 +4,8 @@ import com.umc9th.dumMoney.domain.place.dto.request.RecommendationRequestDto;
 import com.umc9th.dumMoney.domain.place.dto.response.PlaceDetailResponseDto;
 import com.umc9th.dumMoney.domain.place.dto.response.PlaceSearchResponseDto;
 import com.umc9th.dumMoney.domain.place.service.PlaceService;
+import com.umc9th.dumMoney.global.apiPayload.ApiResponse;
+import com.umc9th.dumMoney.global.apiPayload.code.SuccessCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
