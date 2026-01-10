@@ -92,10 +92,11 @@ public class PlaceService {
 
         // DB에서 후보 장소 검색
         List<Place> candidates = placeRepository.findNearbyPlacesForAI(
-                searchLat,
-                searchLng,
-                searchRadius,
-                member.getCurrentBudget()
+                member.getLat(),
+                member.getLng(),
+                member.getSearchRadius().doubleValue(), // radius (m)
+                member.getMinBudget(),               // budget
+                member.getMaxBudget()
         );
 
         log.info("AI 추천 후보군 개수: {}개", candidates.size());
