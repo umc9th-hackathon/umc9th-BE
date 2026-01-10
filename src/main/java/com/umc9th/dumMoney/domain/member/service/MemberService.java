@@ -99,7 +99,7 @@ public class MemberService {
     @Transactional
     public void updateMemberSettings(Long memberId, MemberUpdateDto request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
+                .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 이미 존재하는 메서드를 재사용하여 값을 변경
         member.updateOnboarding(
@@ -114,9 +114,12 @@ public class MemberService {
         return distance != null && (distance == 300 || distance == 500 || distance == 1000 || distance == 1500);
     }
 
-    // 3. 좌표 검증 로직
+    // 3. 좌표 검증 로직 위도 lat, 경도 lng
     private void validateLocation(Double lat, Double lng) {
         if (lat == null || lng == null) {
+            throw new MemberException(ErrorCode.BAD_REQUEST); // 또는 LOCATION_NULL
+        }
+        if ((lat > 90 || lat < -90) || (lng < -180 || lng > 180)) {
             throw new MemberException(ErrorCode.BAD_REQUEST); // 또는 LOCATION_NULL
         }
     }
