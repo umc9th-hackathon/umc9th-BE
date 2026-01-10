@@ -8,6 +8,8 @@ import com.umc9th.dumMoney.domain.place.dto.response.PlaceListResponseDto;
 import com.umc9th.dumMoney.domain.place.dto.response.PlaceSearchResponseDto;
 import com.umc9th.dumMoney.domain.place.entity.Place;
 import com.umc9th.dumMoney.domain.place.repository.PlaceRepository;
+import com.umc9th.dumMoney.global.apiPayload.code.ErrorCode;
+import com.umc9th.dumMoney.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
