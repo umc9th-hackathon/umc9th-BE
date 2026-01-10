@@ -31,7 +31,7 @@ public class PlaceService {
     // 1. 기존 지도 검색 기능
     public PlaceSearchResponseDto searchPlaces(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
+                .orElseThrow(() -> new GeneralException(ErrorCode.MEMBER_NOT_FOUND));
 
         // [추가] 필수 데이터 유효성 검사
         if (member.getLat() == null || member.getLng() == null || member.getSearchRadius() == null) {
@@ -57,7 +57,7 @@ public class PlaceService {
     // 2. 장소 상세 조회
     public PlaceDetailResponseDto getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 장소를 찾을 수 없습니다. id=" + placeId));
+                .orElseThrow(() -> new GeneralException(ErrorCode.NOT_FOUND_PLACE));
         return PlaceDetailResponseDto.from(place);
     }
 
@@ -65,7 +65,7 @@ public class PlaceService {
     public String recommendPlaces(RecommendationRequestDto request) {
         Long memberId = request.getMemberId();
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
+                .orElseThrow(() -> new GeneralException(ErrorCode.MEMBER_NOT_FOUND));
 
         // [핵심 로직] 출발지/도착지가 있으면 -> 직선 경로를 300m 간격으로 분할하여 검색
         List<Place> candidates;
