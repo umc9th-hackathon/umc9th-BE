@@ -27,13 +27,15 @@ public class PlaceService {
     private final GeminiService geminiService;
 
     // 1. 기존 지도 검색 기능
-    public PlaceSearchResponseDto searchPlaces(Long memberId, double lat, double lng) {
+    public PlaceSearchResponseDto searchPlaces(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
 
         double radius = member.getSearchRadius().doubleValue();
+        double memberLat = member.getLat(); // [변경] DB에 저장된 위도 사용
+        double memberLng = member.getLng(); // [변경] DB에 저장된 경도 사용
 
-        List<Object[]> results = placeRepository.findPlacesByDistance(lat, lng, radius);
+        List<Object[]> results = placeRepository.findPlacesByDistance(memberLat, memberLng, radius);
 
         List<PlaceListResponseDto> placeDtos = results.stream()
                 .map(this::mapToDto)

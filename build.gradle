@@ -44,8 +44,15 @@ dependencies {
 
     // JSON 처리
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+jar {
+    enabled = false
 }

@@ -20,13 +20,11 @@ public class PlaceController {
 
     // API: 내 위치 주변 장소 검색
     @GetMapping("/search")
-    public ResponseEntity<PlaceSearchResponseDto> searchNearbyPlaces(
-            @RequestParam("memberId") Long memberId,
-            @RequestParam("lat") double lat,
-            @RequestParam("lng") double lng
+    public ApiResponse<PlaceSearchResponseDto> searchNearbyPlaces(
+            @RequestParam("memberId") Long memberId
     ) {
-        PlaceSearchResponseDto response = placeService.searchPlaces(memberId, lat, lng);
-        return ResponseEntity.ok(response);
+        PlaceSearchResponseDto response = placeService.searchPlaces(memberId);
+        return ApiResponse.onSuccess(SuccessCode.OK, response);
     }
 
     // API: 특정 장소 상세 조회
