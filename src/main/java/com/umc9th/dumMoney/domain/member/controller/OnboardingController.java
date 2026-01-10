@@ -41,12 +41,14 @@ public class OnboardingController {
         return ApiResponse.onSuccess(SuccessCode.OK, response);
     }
 
+    @Operation(summary = "유저의 설정(예산범위, 주변 반경, 카테고리)을 수정",
+            description = "유저의 설정(예산범위, 주변 반경, 카테고리)을 수정합니다.")
+    @ApiErrorCodeExamples({ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     @PatchMapping("/members/{memberId}")
     public ResponseEntity<Void> updateMemberSettings(
             @PathVariable Long memberId,
             @RequestBody MemberUpdateDto request) { // [변경] 모든 정보가 이 안에 있음
 
-        // DTO 안에서 꺼내서 서비스로 전달
         memberService.updateMemberSettings(memberId, request);
 
         return ResponseEntity.ok().build();

@@ -8,6 +8,8 @@ import com.umc9th.dumMoney.domain.place.dto.response.PlaceListResponseDto;
 import com.umc9th.dumMoney.domain.place.dto.response.PlaceSearchResponseDto;
 import com.umc9th.dumMoney.domain.place.entity.Place;
 import com.umc9th.dumMoney.domain.place.repository.PlaceRepository;
+import com.umc9th.dumMoney.global.apiPayload.code.ErrorCode;
+import com.umc9th.dumMoney.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +31,7 @@ public class PlaceService {
     // 1. 기존 지도 검색 기능
     public PlaceSearchResponseDto searchPlaces(Long memberId, double lat, double lng) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
+                .orElseThrow(() -> new GeneralException(ErrorCode.MEMBER_NOT_FOUND));
 
         double radius = member.getSearchRadius().doubleValue();
 
@@ -48,7 +50,9 @@ public class PlaceService {
     // 2. 장소 상세 조회
     public PlaceDetailResponseDto getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 장소를 찾을 수 없습니다. id=" + placeId));
+                .orElseThrow(() -> new GeneralException(ErrorCode.NOT_FOUND));
+
+        // 2. Entity -> DTO 변환 후 반환
         return PlaceDetailResponseDto.from(place);
     }
 
@@ -56,7 +60,7 @@ public class PlaceService {
     public String recommendPlaces(RecommendationRequestDto request) {
         Long memberId = request.getMemberId();
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
+                .orElseThrow(() -> new GeneralException(ErrorCode.MEMBER_NOT_FOUND));
 
         double searchLat;
         double searchLng;
