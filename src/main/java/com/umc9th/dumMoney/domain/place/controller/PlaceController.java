@@ -5,7 +5,10 @@ import com.umc9th.dumMoney.domain.place.dto.response.PlaceDetailResponseDto;
 import com.umc9th.dumMoney.domain.place.dto.response.PlaceSearchResponseDto;
 import com.umc9th.dumMoney.domain.place.service.PlaceService;
 import com.umc9th.dumMoney.global.apiPayload.ApiResponse;
+import com.umc9th.dumMoney.global.apiPayload.code.ErrorCode;
 import com.umc9th.dumMoney.global.apiPayload.code.SuccessCode;
+import com.umc9th.dumMoney.global.config.swagger.ApiErrorCodeExamples;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -21,7 +24,10 @@ public class PlaceController {
     private final PlaceService placeService;
 
     // API: 내 위치 주변 장소 검색
+    @Operation(summary = "내 위치 주변 장소 검색",
+            description = "내 위치를 기준으로, 조건에 맞는 주변 장소를 검색합니다.")
     @GetMapping("/search")
+    @ApiErrorCodeExamples({ErrorCode.MEMBER_NOT_FOUND, ErrorCode.MEMBER_LOCATION_NOT_SET, ErrorCode.INTERNAL_SERVER_ERROR})
     public ApiResponse<PlaceSearchResponseDto> searchNearbyPlaces(
             @RequestParam("memberId") Long memberId
     ) {
@@ -30,14 +36,20 @@ public class PlaceController {
     }
 
     // API: 특정 장소 상세 조회
+    @Operation(summary = "특정 가게 정보 상세 조회",
+            description = "특정 가게의 상세 정보를 조회합니다.")
     @GetMapping("/{placeId}")
+    @ApiErrorCodeExamples({ErrorCode.PLACE_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<PlaceDetailResponseDto> getPlaceDetail(@PathVariable Long placeId) {
         PlaceDetailResponseDto response = placeService.getPlaceDetail(placeId);
         return ResponseEntity.ok(response);
     }
 
     // API: AI 맞춤형 소비/경로 추천 (Gemini)
+    @Operation(summary = "AI 맞춤형 소비/경로 추천",
+            description = "Gemini API를 활용한 AI 맞춤형 소비/경로 추천")
     @PostMapping("/recommend")
+    @ApiErrorCodeExamples({ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<String> recommendPlaces(@RequestBody RecommendationRequestDto request) {
         // 로그에 출발/도착 좌표 정보도 같이 찍히도록 수정함
         log.info("AI 추천 요청 - MemberId: {}, Prompt: {}, Start:({}, {}), End:({}, {})",
