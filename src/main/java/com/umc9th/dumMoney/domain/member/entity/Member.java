@@ -29,10 +29,10 @@ public class Member extends BaseEntity {
     @Column(name = "target_category", nullable = false, length = 20)
     private Category targetCategory;
 
-    @Column(name = "lat")
+    @Column(name = "lat", nullable = false)
     private Double lat; // 위도
 
-    @Column(name = "lng")
+    @Column(name = "lng", nullable = false)
     private Double lng; // 경도
 
     @Builder

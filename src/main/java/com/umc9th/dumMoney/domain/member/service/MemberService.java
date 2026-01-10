@@ -24,13 +24,13 @@ public class MemberService {
             throw new MemberException(ErrorCode.BAD_REQUEST);
         }
 
-        // 게스트 사용자용 새로운 Member 생성 (lat, lng는 null로 설정, 추후 위치 정보 업데이트 가능)
+        // 게스트 사용자용 새로운 Member 생성 (온보딩 시 위치 정보 포함)
         Member member = Member.builder()
                 .currentBudget(request.getBudget())
                 .searchRadius(request.getDistance())
                 .targetCategory(request.getCategory())
-                .lat(null) // 위치 정보는 나중에 업데이트
-                .lng(null) // 위치 정보는 나중에 업데이트
+                .lat(request.getLat())
+                .lng(request.getLng())
                 .build();
 
         Member savedMember = memberRepository.save(member);
