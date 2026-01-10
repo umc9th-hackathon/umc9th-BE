@@ -24,7 +24,7 @@ public class OnboardingController {
     private final MemberService memberService;
 
     @Operation(summary = "온보딩 설정 저장", description = "게스트 사용자의 온보딩 설정(카테고리, 예산, 거리)을 저장하고 새로운 memberId를 할당합니다.")
-    @PostMapping("/onboarding")
+    @PostMapping("/members")
     @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.INTERNAL_SERVER_ERROR})
     public ApiResponse<PreferenceResponse> saveOnboarding(
             @Valid @RequestBody OnboardingRequest request) {
@@ -32,11 +32,11 @@ public class OnboardingController {
         return ApiResponse.onSuccess(SuccessCode.OK, response);
     }
 
-    @Operation(summary = "저장된 온보딩 설정 조회", description = "게스트 사용자의 온보딩 설정을 조회합니다. 온보딩 시 받은 memberId를 헤더로 전달해야 합니다.")
-    @GetMapping("/preferences/me")
+    @Operation(summary = "저장된 온보딩 설정 조회", description = "게스트 사용자의 온보딩 설정을 조회합니다. 온보딩 시 받은 memberId를 경로 변수로 전달해야 합니다.")
+    @GetMapping("/members/{memberId}")
     @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ApiResponse<PreferenceResponse> getPreference(
-            @RequestHeader(value = "X-Member-Id") Long memberId) {
+            @PathVariable("memberId") Long memberId) {
         PreferenceResponse response = memberService.getPreference(memberId);
         return ApiResponse.onSuccess(SuccessCode.OK, response);
     }
