@@ -21,12 +21,6 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    @GetMapping("/member/test")
-    @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.FORBIDDEN, ErrorCode.NOT_FOUND})
-    public String test() {
-        return "Hello, World!";
-    }
-
     @Operation(summary = "위치 정보 업데이트", description = "멤버의 위치 정보(위도, 경도)를 업데이트합니다. memberId를 경로 변수로 전달해야 합니다.")
     @PatchMapping("/members/{memberId}/location")
     @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
