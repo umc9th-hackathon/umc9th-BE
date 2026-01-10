@@ -27,11 +27,11 @@ public class MemberController {
         return "Hello, World!";
     }
 
-    @Operation(summary = "위치 정보 업데이트", description = "멤버의 위치 정보(위도, 경도)를 업데이트합니다.")
-    @PatchMapping("/location")
+    @Operation(summary = "위치 정보 업데이트", description = "멤버의 위치 정보(위도, 경도)를 업데이트합니다. memberId를 경로 변수로 전달해야 합니다.")
+    @PatchMapping("/members/{memberId}/location")
     @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ApiResponse<LocationUpdateResponse> updateLocation(
-            @RequestHeader(value = "X-Member-Id") Long memberId,
+            @PathVariable("memberId") Long memberId,
             @Valid @RequestBody LocationUpdateRequest request) {
         LocationUpdateResponse response = memberService.updateLocation(memberId, request);
         return ApiResponse.onSuccess(SuccessCode.OK, response);

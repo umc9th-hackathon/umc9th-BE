@@ -16,7 +16,7 @@ public class PreferenceResponse {
     private Category category;
     private Integer minBudget;
     private Integer maxBudget;
-    private Integer distance; // meters (300, 500, 1000)
+    private Integer distance; // meters (300, 500, 1000, 1500)
 
     public static PreferenceResponse from(Member member) {
         return PreferenceResponse.builder()
