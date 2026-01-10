@@ -13,15 +13,15 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 접근 제어 (안전성 UP)
 @Table(name = "place") // DB 테이블명 명시
-public class Place {
+public class Place extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "place_id")
     private Long id;
 
-    // 네이버 지도 ID (중복 방지, Unique)
-    @Column(name = "naver_place_id", nullable = false, unique = true)
+    // 카카오 지도 ID (중복 방지, Unique)
+    @Column(name = "kakao_place_id", nullable = false, unique = true)
     private Long naverPlaceId;
 
     @Column(nullable = false, length = 30)
@@ -47,6 +47,9 @@ public class Place {
     @Column(length = 255)
     private String description;
 
+    @Column(name = "menu_name", nullable = false)
+    private String menuName;
+
     @Column(name = "menu_price", nullable = false)
     private Integer menuPrice;
 
@@ -68,7 +71,7 @@ public class Place {
     @Builder
     public Place(Long naverPlaceId, String name, PlaceCategory category, String phone,
                  String roadAddress, String address, String openingHours, String description,
-                 Integer menuPrice, String imageUrl, Double lat, Double lng) {
+                 Integer menuPrice, String menuName, String imageUrl, Double lat, Double lng) {
         this.naverPlaceId = naverPlaceId;
         this.name = name;
         this.category = category;
@@ -78,6 +81,7 @@ public class Place {
         this.openingHours = openingHours;
         this.description = description;
         this.menuPrice = menuPrice;
+        this.menuName = menuName;
         this.imageUrl = imageUrl;
         this.lat = lat;
         this.lng = lng;
