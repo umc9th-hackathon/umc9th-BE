@@ -36,12 +36,16 @@ public class GeneralExceptionAdvice {
         String url = request.getRequestURI();
         String method = request.getMethod();
 
-        // 로그 출력
+        // 로그 출력 (더 자세한 정보)
         log.error("[500 ERROR] {} {} - {}", method, url, ex.getMessage(), ex);
+        if (ex.getCause() != null) {
+            log.error("[500 ERROR] Caused by: {}", ex.getCause().getMessage(), ex.getCause());
+        }
 
         BaseErrorCode code = ErrorCode.INTERNAL_SERVER_ERROR;
+        String errorMessage = ex.getMessage() != null ? ex.getMessage() : "예기치 않은 서버 에러가 발생했습니다.";
         return ResponseEntity.status(code.getStatus())
-                .body(ApiResponse.onFailure(code, null));
+                .body(ApiResponse.onFailure(code, errorMessage));
     }
 
 }
