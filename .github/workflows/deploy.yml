@@ -62,6 +62,13 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             mkdir -p /home/ubuntu/app
-            echo "${{ secrets.APPLICATION_YML }}" > /home/ubuntu/app/application.yml
+            # 파일 직접 쓰기 (cat 방식이 가장 안전함)
+            cat <<EOF > /home/ubuntu/app/application.yml
+            ${{ secrets.APPLICATION_YML }}
+            EOF
+            
+            # 기존 프로세스 종료
             sudo fuser -k 8080/tcp || true
+            
+            # 실행 (JAR 파일이 하나만 있도록 보장)
             nohup java -jar /home/ubuntu/app/*.jar > /home/ubuntu/app/nohup.out 2>&1 &
