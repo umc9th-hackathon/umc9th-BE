@@ -21,7 +21,7 @@ public class OnboardingController {
 
     private final MemberService memberService;
 
-    @Operation(summary = "온보딩 설정 저장 및 업데이트", description = "사용자의 온보딩 설정(카테고리, 예산, 거리)을 저장하거나 업데이트합니다.")
+    @Operation(summary = "온보딩 설정 저장 및 업데이트", description = "사용자의 온보딩 설정(카테고리, 예산, 거리)을 저장하거나 업데이트합니다")
     @PostMapping("/onboarding")
     @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ApiResponse<PreferenceResponse> saveOnboarding(
