@@ -19,8 +19,11 @@ public class Member extends BaseEntity {
     @Column(name = "member_id")
     private Long memberId;
 
-    @Column(name = "current_budget", nullable = false)
-    private Integer currentBudget;
+    @Column(name = "min_budget", nullable = false)
+    private Integer minBudget;
+
+    @Column(name = "max_budget", nullable = false)
+    private Integer maxBudget;
 
     @Column(name = "search_radius", nullable = false)
     private Integer searchRadius;
@@ -36,16 +39,18 @@ public class Member extends BaseEntity {
     private Double lng; // 경도
 
     @Builder
-    public Member(Integer currentBudget, Integer searchRadius, Category targetCategory, Double lat, Double lng) {
-        this.currentBudget = currentBudget;
+    public Member(Integer minBudget, Integer maxBudget, Integer searchRadius, Category targetCategory, Double lat, Double lng) {
+        this.minBudget = minBudget;
+        this.maxBudget = maxBudget;
         this.searchRadius = searchRadius;
         this.targetCategory = targetCategory;
         this.lat = lat;
         this.lng = lng;
     }
 
-    public void updateOnboarding(Integer currentBudget, Integer searchRadius, Category targetCategory) {
-        this.currentBudget = currentBudget;
+    public void updateOnboarding(Integer minBudget, Integer maxBudget, Integer searchRadius, Category targetCategory) {
+        this.minBudget = minBudget;
+        this.maxBudget = maxBudget;
         this.searchRadius = searchRadius;
         this.targetCategory = targetCategory;
     }

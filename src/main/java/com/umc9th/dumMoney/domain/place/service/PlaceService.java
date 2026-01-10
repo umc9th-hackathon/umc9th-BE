@@ -66,7 +66,8 @@ public class PlaceService {
                 member.getLat(),
                 member.getLng(),
                 member.getSearchRadius().doubleValue(), // radius (m)
-                member.getCurrentBudget()               // budget
+                member.getMinBudget(),               // budget
+                member.getMaxBudget()
         );
 
         log.info("AI 추천 후보군 개수: {}개", candidates.size());

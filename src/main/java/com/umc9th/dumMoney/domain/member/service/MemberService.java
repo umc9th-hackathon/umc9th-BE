@@ -26,9 +26,15 @@ public class MemberService {
             throw new MemberException(ErrorCode.BAD_REQUEST);
         }
 
+        // 예산 범위 검증 (minBudget <= maxBudget)
+        if (request.getMinBudget() > request.getMaxBudget()) {
+            throw new MemberException(ErrorCode.BAD_REQUEST);
+        }
+
         // 게스트 사용자용 새로운 Member 생성 (온보딩 시 위치 정보 포함)
         Member member = Member.builder()
-                .currentBudget(request.getBudget())
+                .minBudget(request.getMinBudget())
+                .maxBudget(request.getMaxBudget())
                 .searchRadius(request.getDistance())
                 .targetCategory(request.getCategory())
                 .lat(request.getLat())
