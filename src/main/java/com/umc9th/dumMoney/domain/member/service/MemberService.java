@@ -99,18 +99,9 @@ public class MemberService {
     @Transactional
     public void updateMemberSettings(Long memberId, MemberUpdateDto request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + memberId));
 
-        // 거리 검증 (300, 500, 1000, 1500만 허용)
-        if (!isValidDistance(request.getRadius())) {
-            throw new MemberException(ErrorCode.INVALID_DISTANCE);
-        }
-
-        // 예산 범위 검증 (minBudget <= maxBudget)
-        if (request.getMinBudget() > request.getMaxBudget()) {
-            throw new MemberException(ErrorCode.INVALID_BUDGET_RANGE);
-        }
-
+        // 이미 존재하는 메서드를 재사용하여 값을 변경
         member.updateOnboarding(
                 request.getMinBudget(),
                 request.getMaxBudget(),
