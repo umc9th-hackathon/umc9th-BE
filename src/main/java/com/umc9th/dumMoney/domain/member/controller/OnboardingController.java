@@ -25,7 +25,8 @@ public class OnboardingController {
 
     @Operation(summary = "온보딩 설정 저장", description = "게스트 사용자의 온보딩 설정(카테고리, 예산, 거리)을 저장하고 새로운 memberId를 할당합니다.")
     @PostMapping("/members")
-    @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.INTERNAL_SERVER_ERROR})
+    @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.INVALID_DISTANCE, ErrorCode.INVALID_BUDGET
+            , ErrorCode.INVALID_LOCATION, ErrorCode.INTERNAL_SERVER_ERROR})
     public ApiResponse<PreferenceResponse> saveOnboarding(
             @Valid @RequestBody OnboardingRequest request) {
         PreferenceResponse response = memberService.createOnboarding(request);
@@ -43,7 +44,7 @@ public class OnboardingController {
 
     @Operation(summary = "유저의 설정(예산범위, 주변 반경, 카테고리)을 수정",
             description = "유저의 설정(예산범위, 주변 반경, 카테고리)을 수정합니다.")
-    @ApiErrorCodeExamples({ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    @ApiErrorCodeExamples({ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INVALID_BUDGET, ErrorCode.INTERNAL_SERVER_ERROR})
     @PatchMapping("/members/{memberId}")
     public ResponseEntity<Void> updateMemberSettings(
             @PathVariable Long memberId,

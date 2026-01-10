@@ -24,9 +24,7 @@ public class MemberService {
         }
 
         // 예산 범위 검증 (minBudget <= maxBudget)
-        if (request.getMinBudget() > request.getMaxBudget()) {
-            throw new MemberException(ErrorCode.INVALID_BUDGET_RANGE);
-        }
+        validateBudget(request.getMinBudget(), request.getMaxBudget());
 
         // 좌표 검증 (null 체크)
         validateLocation(request.getLat(), request.getLng());
@@ -101,6 +99,9 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 
+
+        validateBudget(request.getMinBudget(), request.getMaxBudget());
+
         // 이미 존재하는 메서드를 재사용하여 값을 변경
         member.updateOnboarding(
                 request.getMinBudget(),
@@ -117,10 +118,22 @@ public class MemberService {
     // 3. 좌표 검증 로직 위도 lat, 경도 lng
     private void validateLocation(Double lat, Double lng) {
         if (lat == null || lng == null) {
-            throw new MemberException(ErrorCode.BAD_REQUEST); // 또는 LOCATION_NULL
+            throw new MemberException(ErrorCode.INVALID_LOCATION); // 또는 LOCATION_NULL
         }
         if ((lat > 90 || lat < -90) || (lng < -180 || lng > 180)) {
-            throw new MemberException(ErrorCode.BAD_REQUEST); // 또는 LOCATION_NULL
+            throw new MemberException(ErrorCode.INVALID_LOCATION); // 또는 LOCATION_NULL
+        }
+    }
+
+    private void validateBudget(Integer minBudget, Integer maxBudget) {
+        if (minBudget == null || maxBudget == null) {
+            throw new MemberException(ErrorCode.INVALID_BUDGET);
+        }
+        if (minBudget > maxBudget) {
+            throw new MemberException(ErrorCode.INVALID_BUDGET);
+        }
+        if (minBudget < 0 || maxBudget > 100000) {
+            throw new MemberException(ErrorCode.INVALID_BUDGET);
         }
     }
 }
