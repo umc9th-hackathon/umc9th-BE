@@ -2,7 +2,8 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "develop" ]  # 나중에 main으로 변경 가능
+
 
 jobs:
   build:
@@ -23,6 +24,7 @@ jobs:
         run: |
           mkdir -p ./src/main/resources
           echo "${{ secrets.APPLICATION_YML }}" > ./src/main/resources/application.yml
+
 
       - name: Make gradlew executable
         run: chmod +x gradlew
@@ -54,15 +56,26 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           source: "*.jar"
-          target: "/home/ubuntu/app/"   # 폴더명을 app으로 통일 (관리하기 편함)
+          target: "/home/ubuntu/back-end/"
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
+#        env:
+#          APPLICATION_YML: ${{ secrets.APPLICATION_YML }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
+            # Base64로 전달된 yml 디코딩
+            echo "${{ secrets.APPLICATION_YML }}" | base64 --decode > /home/ubuntu/back-end/application.yml
+
+            # 배포 스크립트 실행
+            bash ~/back-end/deploy.sh
+
+      - name: Restart Spring Boot service
+        uses: appleboy/ssh-action@v1.0.0
+
             # 1. 배포 폴더 확인 및 생성
             mkdir -p /home/ubuntu/app
             
@@ -76,3 +89,4 @@ jobs:
             # 4. 서버 실행 (nohup으로 백그라운드 실행)
             # 로그는 nohup.out에 저장됨
             nohup java -jar /home/ubuntu/app/*.jar > /home/ubuntu/app/nohup.out 2>&1 &
+
