@@ -29,11 +29,9 @@ public class PlaceController {
     @ApiErrorCodeExamples({ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     @GetMapping("/search")
     public ApiResponse<PlaceSearchResponseDto> searchNearbyPlaces(
-            @RequestParam("memberId") Long memberId,
-            @RequestParam("lat") double lat,
-            @RequestParam("lng") double lng
+            @RequestParam("memberId") Long memberId
     ) {
-        PlaceSearchResponseDto response = placeService.searchPlaces(memberId, lat, lng);
+        PlaceSearchResponseDto response = placeService.searchPlaces(memberId);
         return ApiResponse.onSuccess(SuccessCode.OK, response);
     }
 
