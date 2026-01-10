@@ -2,8 +2,10 @@ package com.umc9th.dumMoney.domain.place.service;
 
 import com.umc9th.dumMoney.domain.member.entity.Member;
 import com.umc9th.dumMoney.domain.member.repository.MemberRepository;
+import com.umc9th.dumMoney.domain.place.dto.response.PlaceDetailResponseDto;
 import com.umc9th.dumMoney.domain.place.dto.response.PlaceListResponseDto;
 import com.umc9th.dumMoney.domain.place.dto.response.PlaceSearchResponseDto;
+import com.umc9th.dumMoney.domain.place.entity.Place;
 import com.umc9th.dumMoney.domain.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,16 @@ public class PlaceService {
                 .count(placeDtos.size())
                 .places(placeDtos)
                 .build();
+    }
+
+    // 장소 상세 조회
+    public PlaceDetailResponseDto getPlaceDetail(Long placeId) {
+        // 1. DB에서 ID로 장소 조회 (없으면 예외 발생)
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 장소를 찾을 수 없습니다. id=" + placeId));
+
+        // 2. Entity -> DTO 변환 후 반환
+        return PlaceDetailResponseDto.from(place);
     }
 
     private PlaceListResponseDto mapToDto(Object[] result) {
