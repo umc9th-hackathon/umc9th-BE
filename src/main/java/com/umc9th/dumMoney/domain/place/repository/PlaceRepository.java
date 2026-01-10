@@ -26,9 +26,12 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             "p.road_address, " +
             "p.url, " +
             "p.opening_hour, " +
+            // 1. SELECT 절의 거리 계산 (보여주기 용)
             "(6371000 * acos(cos(radians(:lat)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(:lng)) + sin(radians(:lat)) * sin(radians(p.lat)))) AS distance " +
             "FROM place p " +
-            "HAVING distance <= :radius " +
+            // 2. WHERE 절에서 필터링 (공식 반복 사용)
+            "WHERE (6371000 * acos(cos(radians(:lat)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(:lng)) + sin(radians(:lat)) * sin(radians(p.lat)))) <= :radius " +
+            // 3. 정렬은 별칭(distance) 사용 가능
             "ORDER BY distance ASC", nativeQuery = true)
     List<Object[]> findPlacesByDistance(@Param("lat") double lat,
                                         @Param("lng") double lng,
@@ -51,3 +54,5 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
                                       @Param("radius") double radius, // radius 단위: m
                                       @Param("budget") long budget);
 }
+
+
