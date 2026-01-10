@@ -49,4 +49,9 @@ public class Member extends BaseEntity {
         this.searchRadius = searchRadius;
         this.targetCategory = targetCategory;
     }
+
+    public void updateLocation(Double lat, Double lng) {
+        this.lat = lat;
+        this.lng = lng;
+    }
 }

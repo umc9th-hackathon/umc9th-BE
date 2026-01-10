@@ -1,5 +1,7 @@
 package com.umc9th.dumMoney.domain.member.service;
 
+import com.umc9th.dumMoney.domain.member.dto.LocationUpdateRequest;
+import com.umc9th.dumMoney.domain.member.dto.LocationUpdateResponse;
 import com.umc9th.dumMoney.domain.member.dto.OnboardingRequest;
 import com.umc9th.dumMoney.domain.member.dto.PreferenceResponse;
 import com.umc9th.dumMoney.domain.member.entity.Member;
@@ -41,6 +43,24 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
         return PreferenceResponse.from(member);
+    }
+
+    @Transactional
+    public LocationUpdateResponse updateLocation(Long memberId, LocationUpdateRequest request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
+
+        member.updateLocation(request.getLat(), request.getLng());
+        Member savedMember = memberRepository.save(member);
+
+        return LocationUpdateResponse.builder()
+                .memberId(savedMember.getMemberId())
+                .location(LocationUpdateResponse.Location.builder()
+                        .lat(savedMember.getLat())
+                        .lng(savedMember.getLng())
+                        .build())
+                .updatedAt(savedMember.getUpdatedAt())
+                .build();
     }
 
     private boolean isValidDistance(Integer distance) {
