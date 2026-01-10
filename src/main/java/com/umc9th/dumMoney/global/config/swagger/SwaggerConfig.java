@@ -20,10 +20,10 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi allApi(ApiErrorCodeOperationCustomizer apiErrorCodeOperationCustomizer) {
         return GroupedOpenApi.builder()
-                .group("BizScan-API-v1")
+                .group("DumNdum-API-v1")
                 .pathsToMatch("/**")
-                .displayName("BizScan API 명세서")
-                .addOpenApiCustomizer(createOpenApiCustomizer("BizScan API", "v0.1"))
+                .displayName("DumNdum API 명세서")
+                .addOpenApiCustomizer(createOpenApiCustomizer("DumNdum API", "v0.1"))
                 .addOperationCustomizer(apiErrorCodeOperationCustomizer)
                 .build();
     }
@@ -33,7 +33,7 @@ public class SwaggerConfig {
      */
     private OpenApiCustomizer createOpenApiCustomizer(String title, String version) {
         return openApi -> {
-            openApi.info(new Info().title(title).version(version).description("BizScan API Swagger 명세서입니다."));
+            openApi.info(new Info().title(title).version(version).description("DumNdum API Swagger 명세서입니다."));
             openApi.setServers(List.of(
                     new Server().url("/")
             ));
