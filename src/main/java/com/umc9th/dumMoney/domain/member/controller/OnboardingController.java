@@ -21,26 +21,21 @@ public class OnboardingController {
 
     private final MemberService memberService;
 
-    @Operation(summary = "온보딩 설정 저장 및 업데이트", description = "사용자의 온보딩 설정(카테고리, 예산, 거리)을 저장하거나 업데이트합니다")
+    @Operation(summary = "온보딩 설정 저장", description = "게스트 사용자의 온보딩 설정(카테고리, 예산, 거리)을 저장하고 새로운 memberId를 할당합니다.")
     @PostMapping("/onboarding")
-    @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.INTERNAL_SERVER_ERROR})
     public ApiResponse<PreferenceResponse> saveOnboarding(
-            @RequestHeader(value = "X-Member-Id", required = false) Long memberId,
             @Valid @RequestBody OnboardingRequest request) {
-        // 임시로 memberId가 없으면 1L 사용 (추후 인증 추가 시 변경)
-        Long finalMemberId = memberId != null ? memberId : 1L;
-        PreferenceResponse response = memberService.saveOrUpdateOnboarding(finalMemberId, request);
+        PreferenceResponse response = memberService.createOnboarding(request);
         return ApiResponse.onSuccess(SuccessCode.OK, response);
     }
 
-    @Operation(summary = "저장된 온보딩 설정 조회", description = "현재 사용자의 온보딩 설정을 조회합니다.")
+    @Operation(summary = "저장된 온보딩 설정 조회", description = "게스트 사용자의 온보딩 설정을 조회합니다. 온보딩 시 받은 memberId를 헤더로 전달해야 합니다.")
     @GetMapping("/preferences/me")
-    @ApiErrorCodeExamples({ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    @ApiErrorCodeExamples({ErrorCode.BAD_REQUEST, ErrorCode.MEMBER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ApiResponse<PreferenceResponse> getPreference(
-            @RequestHeader(value = "X-Member-Id", required = false) Long memberId) {
-        // 임시로 memberId가 없으면 1L 사용 (추후 인증 추가 시 변경)
-        Long finalMemberId = memberId != null ? memberId : 1L;
-        PreferenceResponse response = memberService.getPreference(finalMemberId);
+            @RequestHeader(value = "X-Member-Id") Long memberId) {
+        PreferenceResponse response = memberService.getPreference(memberId);
         return ApiResponse.onSuccess(SuccessCode.OK, response);
     }
 }

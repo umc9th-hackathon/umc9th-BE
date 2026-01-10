@@ -18,17 +18,23 @@ public class MemberService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public PreferenceResponse saveOrUpdateOnboarding(Long memberId, OnboardingRequest request) {
+    public PreferenceResponse createOnboarding(OnboardingRequest request) {
         // 거리 검증 (300, 500, 1000, 1500만 허용)
         if (!isValidDistance(request.getDistance())) {
             throw new MemberException(ErrorCode.BAD_REQUEST);
         }
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
+        // 게스트 사용자용 새로운 Member 생성 (lat, lng는 null로 설정, 추후 위치 정보 업데이트 가능)
+        Member member = Member.builder()
+                .currentBudget(request.getBudget())
+                .searchRadius(request.getDistance())
+                .targetCategory(request.getCategory())
+                .lat(null) // 위치 정보는 나중에 업데이트
+                .lng(null) // 위치 정보는 나중에 업데이트
+                .build();
 
-        member.updateOnboarding(request.getBudget(), request.getDistance(), request.getCategory());
-        return PreferenceResponse.from(member);
+        Member savedMember = memberRepository.save(member);
+        return PreferenceResponse.from(savedMember);
     }
 
     public PreferenceResponse getPreference(Long memberId) {
