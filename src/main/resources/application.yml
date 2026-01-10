@@ -1,19 +1,24 @@
 spring:
-  application:
-    name: "bizscan"
+  h2:
+    console:
+      enabled: true  # 웹 브라우저에서 DB를 볼 수 있게 설정 (중요!)
+      path: /h2-console
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PW}
+    # [변경 후] file:./폴더명/파일명 (파일 모드)
+    # ./ 는 '현재 프로젝트 루트 폴더'를 의미합니다.
+    url: jdbc:h2:file:./database/local_db;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:       # 비밀번호 없음 (비워두기)
 
   jpa:
-    database: mysql
-    database-platform: org.hibernate.dialect.MySQLDialect
-    show-sql: true
     hibernate:
+      # [중요!] create로 되어 있으면 파일이 있어도 켤 때마다 지우고 새로 만듭니다.
+      # 반드시 'update'로 변경해야 데이터가 유지됩니다.
       ddl-auto: update
+
+    show-sql: true      # 쿼리 로그 보기
     properties:
       hibernate:
         format_sql: true
