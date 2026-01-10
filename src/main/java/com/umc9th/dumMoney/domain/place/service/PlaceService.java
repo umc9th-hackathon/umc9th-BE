@@ -57,7 +57,7 @@ public class PlaceService {
     // 2. 장소 상세 조회
     public PlaceDetailResponseDto getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new GeneralException(ErrorCode.NOT_FOUND_PLACE));
+                .orElseThrow(() -> new GeneralException(ErrorCode.PLACE_NOT_FOUND));
         return PlaceDetailResponseDto.from(place);
     }
 
