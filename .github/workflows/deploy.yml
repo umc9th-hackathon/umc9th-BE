@@ -70,5 +70,4 @@ jobs:
             # 기존 프로세스 종료
             sudo fuser -k 8080/tcp || true
             
-            # 실행 (JAR 파일이 하나만 있도록 보장)
-            nohup java -jar /home/ubuntu/app/*.jar > /home/ubuntu/app/nohup.out 2>&1 &
+            nohup java -jar /home/ubuntu/app/*[!n].jar > /home/ubuntu/app/nohup.out 2>&1 &
