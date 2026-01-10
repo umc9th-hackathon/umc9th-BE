@@ -1,5 +1,6 @@
 package com.umc9th.dumMoney.domain.member.controller;
 
+import com.umc9th.dumMoney.domain.member.dto.MemberUpdateDto;
 import com.umc9th.dumMoney.domain.member.dto.OnboardingRequest;
 import com.umc9th.dumMoney.domain.member.dto.PreferenceResponse;
 import com.umc9th.dumMoney.domain.member.service.MemberService;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "온보딩", description = "온보딩 관련 API")
@@ -37,5 +39,16 @@ public class OnboardingController {
             @PathVariable("memberId") Long memberId) {
         PreferenceResponse response = memberService.getPreference(memberId);
         return ApiResponse.onSuccess(SuccessCode.OK, response);
+    }
+
+    @PatchMapping("/members/{memberId}")
+    public ResponseEntity<Void> updateMemberSettings(
+            @PathVariable Long memberId,
+            @RequestBody MemberUpdateDto request) { // [변경] 모든 정보가 이 안에 있음
+
+        // DTO 안에서 꺼내서 서비스로 전달
+        memberService.updateMemberSettings(memberId, request);
+
+        return ResponseEntity.ok().build();
     }
 }
