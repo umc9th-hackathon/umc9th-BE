@@ -43,16 +43,22 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
      * 지구 반지름: 6371000 (미터)
      * 거리 계산 및 비교 모두 미터(m) 기준
      * 예산 범위: minBudget <= menu_price <= maxBudget
+     * 카테고리 필터링: category = :category (CAFE or RESTAURANT)
+     * H2 MySQL 모드에서 LIMIT 사용 (deleted_at NULL 체크 추가)
      */
     @Query(value = "SELECT * " +
             "FROM place p " +
-            "WHERE p.menu_price >= :minBudget AND p.menu_price <= :maxBudget " +
-            "HAVING (6371000 * acos(cos(radians(:lat)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(:lng)) + sin(radians(:lat)) * sin(radians(p.lat)))) <= :radius " +
+            "WHERE p.category = :category " +
+            "  AND p.menu_price >= :minBudget " +
+            "  AND p.menu_price <= :maxBudget " +
+            "  AND (p.deleted_at IS NULL) " +
+            "  AND (6371000 * acos(cos(radians(:lat)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(:lng)) + sin(radians(:lat)) * sin(radians(p.lat)))) <= :radius " +
             "ORDER BY (6371000 * acos(cos(radians(:lat)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(:lng)) + sin(radians(:lat)) * sin(radians(p.lat)))) ASC " +
             "LIMIT 10", nativeQuery = true)
     List<Place> findNearbyPlacesForAI(@Param("lat") double lat,
                                       @Param("lng") double lng,
                                       @Param("radius") double radius, // radius 단위: m
+                                      @Param("category") String category, // CAFE or RESTAURANT
                                       @Param("minBudget") Integer minBudget,
                                       @Param("maxBudget") Integer maxBudget);
 
