@@ -27,6 +27,7 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final MemberRepository memberRepository;
     private final GeminiService geminiService;
+    private final GeocodingService geocodingService;
 
     // 1. 기존 지도 검색 기능
     public PlaceSearchResponseDto searchPlaces(Long memberId) {
@@ -61,21 +62,83 @@ public class PlaceService {
         return PlaceDetailResponseDto.from(place);
     }
 
-    // 3. [수정됨] AI 맞춤형 추천 기능 (경로 기반)
+    // 3. [수정됨] AI 맞춤형 추천 기능 (경로 기반 + 자연어 장소명 지원)
     public String recommendPlaces(RecommendationRequestDto request) {
         Long memberId = request.getMemberId();
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new GeneralException(ErrorCode.MEMBER_NOT_FOUND));
 
+        // [핵심] 자연어 장소명을 좌표로 변환 (GeocodingService 사용)
+        Double startLat = null;
+        Double startLng = null;
+        Double endLat = null;
+        Double endLng = null;
+        
+        String startLocationName = null;
+        String endLocationName = null;
+
+        // 멤버 좌표 유효성 검증
+        if (!isValidCoordinate(member.getLat(), member.getLng())) {
+            log.error("멤버의 현재 위치가 유효하지 않습니다. memberId: {}, lat: {}, lng: {}", 
+                    memberId, member.getLat(), member.getLng());
+            throw new GeneralException(ErrorCode.MEMBER_LOCATION_NOT_SET);
+        }
+
+        // 출발지 자연어 처리
+        if (request.getStartLocation() != null && !request.getStartLocation().trim().isEmpty()) {
+            log.info("출발지 자연어 변환 시도: '{}'", request.getStartLocation());
+            double[] startCoords = geocodingService.geocode(request.getStartLocation());
+            if (startCoords != null && isValidCoordinate(startCoords[0], startCoords[1])) {
+                startLat = startCoords[0];
+                startLng = startCoords[1];
+                startLocationName = request.getStartLocation();
+                log.info("출발지 좌표 변환 성공: '{}' → ({}, {})", request.getStartLocation(), startLat, startLng);
+            } else {
+                log.warn("출발지 '{}' 변환 실패 또는 좌표가 유효하지 않음. 멤버의 현재 위치를 사용합니다.", 
+                        request.getStartLocation());
+                startLat = member.getLat();
+                startLng = member.getLng();
+                log.info("출발지 → 멤버 현재 위치 사용: ({}, {})", startLat, startLng);
+            }
+        } else {
+            // 출발지 자연어가 없으면 멤버의 현재 위치 사용
+            startLat = member.getLat();
+            startLng = member.getLng();
+            log.info("출발지 자연어 없음 → 멤버 현재 위치 사용: ({}, {})", startLat, startLng);
+        }
+
+        // 도착지 자연어 처리
+        if (request.getEndLocation() != null && !request.getEndLocation().trim().isEmpty()) {
+            log.info("도착지 자연어 변환 시도: '{}'", request.getEndLocation());
+            double[] endCoords = geocodingService.geocode(request.getEndLocation());
+            if (endCoords != null && isValidCoordinate(endCoords[0], endCoords[1])) {
+                endLat = endCoords[0];
+                endLng = endCoords[1];
+                endLocationName = request.getEndLocation();
+                log.info("도착지 좌표 변환 성공: '{}' → ({}, {})", request.getEndLocation(), endLat, endLng);
+            } else {
+                log.warn("도착지 '{}' 변환 실패 또는 좌표가 유효하지 않음. 멤버의 현재 위치를 사용합니다.", 
+                        request.getEndLocation());
+                endLat = member.getLat();
+                endLng = member.getLng();
+                log.info("도착지 → 멤버 현재 위치 사용: ({}, {})", endLat, endLng);
+            }
+        } else {
+            // 도착지 자연어가 없으면 멤버의 현재 위치 사용
+            endLat = member.getLat();
+            endLng = member.getLng();
+            log.info("도착지 자연어 없음 → 멤버 현재 위치 사용: ({}, {})", endLat, endLng);
+        }
+
         // [핵심 로직] 출발지/도착지가 있으면 -> 직선 경로를 300m 간격으로 분할하여 검색
         List<Place> candidates;
         String routeInfo;
         
-        if (request.getStartLat() != null && request.getEndLat() != null) {
+        if (startLat != null && endLat != null) {
             // 1. 출발지와 도착지 사이 전체 거리 계산
             double totalDistance = getDistance(
-                    request.getStartLat(), request.getStartLng(),
-                    request.getEndLat(), request.getEndLng()
+                    startLat, startLng,
+                    endLat, endLng
             );
             
             // 출발지와 도착지가 같은 경우 처리 (거리 0)
@@ -84,27 +147,28 @@ public class PlaceService {
                 
                 String categoryStr = determineCategoryFromPrompt(request.getUserPrompt());
                 candidates = placeRepository.findNearbyPlacesForAI(
-                        request.getStartLat(),
-                        request.getStartLng(),
+                        startLat,
+                        startLng,
                         500.0, // 반경 500m
                         categoryStr,
                         member.getMinBudget(),
                         member.getMaxBudget()
                 );
                 
-                routeInfo = String.format("위치(%f, %f) 주변 500m 내 장소 검색",
-                        request.getStartLat(), request.getStartLng());
+                String locationDisplay = startLocationName != null ? startLocationName : "위치";
+                routeInfo = String.format("%s(%f, %f) 주변 500m 내 장소 검색",
+                        locationDisplay, startLat, startLng);
                 
                 log.info("검색 조건: 카테고리={}, 예산={}~{}, 반경=500m, 좌표=({}, {})", 
                         categoryStr, member.getMinBudget(), member.getMaxBudget(), 
-                        request.getStartLat(), request.getStartLng());
+                        startLat, startLng);
                 
             } else {
                 // 2. 직선 경로를 300m 간격으로 분할하여 기준점 생성
                 double interval = 300.0; // 300m 간격
                 List<double[]> waypoints = generateWaypoints(
-                        request.getStartLat(), request.getStartLng(),
-                        request.getEndLat(), request.getEndLng(),
+                        startLat, startLng,
+                        endLat, endLng,
                         interval
                 );
                 
@@ -141,14 +205,16 @@ public class PlaceService {
                 // 4. 최종 검증: 각 장소가 실제로 경로에서 500m 이내인지 확인
                 candidates = filterPlacesWithinRoute(
                         candidates,
-                        request.getStartLat(), request.getStartLng(),
-                        request.getEndLat(), request.getEndLng(),
+                        startLat, startLng,
+                        endLat, endLng,
                         500.0
                 );
                 
-                routeInfo = String.format("출발지(%f, %f)에서 도착지(%f, %f)로 이동 중, 경로 상 500m 이내 장소 검색",
-                        request.getStartLat(), request.getStartLng(),
-                        request.getEndLat(), request.getEndLng());
+                String startName = startLocationName != null ? startLocationName : "출발지";
+                String endName = endLocationName != null ? endLocationName : "도착지";
+                routeInfo = String.format("%s(%f, %f)에서 %s(%f, %f)로 이동 중, 경로 상 500m 이내 장소 검색",
+                        startName, startLat, startLng,
+                        endName, endLat, endLng);
                 
                 log.info("최종 후보군 개수: {}개 (경로 상 500m 이내 필터링 후)", candidates.size());
             }
@@ -184,18 +250,18 @@ public class PlaceService {
 
         // [성능 향상] 경로 이탈 거리와 가격 기반 가중치 점수 계산 및 정렬
         // 출발지/도착지가 있고, 거리가 0이 아닌 경우에만 경로 기반 점수 계산
-        if (request.getStartLat() != null && request.getEndLat() != null) {
+        if (startLat != null && endLat != null) {
             double totalDistance = getDistance(
-                    request.getStartLat(), request.getStartLng(),
-                    request.getEndLat(), request.getEndLng()
+                    startLat, startLng,
+                    endLat, endLng
             );
             
             if (totalDistance >= 10.0) {
                 // 경로가 있는 경우: 경로 이탈 거리와 가격 가중치 계산
                 candidates = calculateAndSortByScore(
                         candidates,
-                        request.getStartLat(), request.getStartLng(),
-                        request.getEndLat(), request.getEndLng(),
+                        startLat, startLng,
+                        endLat, endLng,
                         member.getMinBudget(),
                         member.getMaxBudget()
                 );
@@ -512,6 +578,17 @@ public class PlaceService {
             this.routeDistance = routeDistance;
             this.priceScore = priceScore;
         }
+    }
+
+    /**
+     * 좌표 유효성 검증 (위도: -90~90, 경도: -180~180)
+     */
+    private boolean isValidCoordinate(Double lat, Double lng) {
+        if (lat == null || lng == null) {
+            return false;
+        }
+        // 위도: -90 ~ 90, 경도: -180 ~ 180
+        return lat >= -90.0 && lat <= 90.0 && lng >= -180.0 && lng <= 180.0;
     }
 
     // DTO 매핑 헬퍼 메서드
